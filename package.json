@@ -23,6 +23,7 @@
     "jspdf-autotable": "^3.5.9",
     "nodemailer": "^6.4.11",
     "numeral": "^2.0.6",
+    "sequelize": "^6.3.5",
     "sequelize-cli": "^6.2.0",
     "vue": "2.6.10",
     "vue-bootstrap-datetimepicker": "^5.0.1",
