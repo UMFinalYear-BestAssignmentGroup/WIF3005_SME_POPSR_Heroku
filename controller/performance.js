@@ -83,6 +83,7 @@ exports.get_performance_overall = function (req, res, next) {
         .then(result => {
             let year = req.body.year == null ? (new Date()).getFullYear() : req.body.year;
 
+            console.log(result)
             let po = result[0];
             let psr = result[1];
             let usr_po = result[2];
@@ -150,7 +151,8 @@ function calculateDeclines(data) {
     try {
         let tmp = 0;
         for (const i in data) {
-            if (data.status_decline) tmp++;
+            console.log(data[i].status_decline)
+            if (data[i].status_decline) tmp++;
         }
 
         return tmp;
