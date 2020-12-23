@@ -47,7 +47,7 @@ exports.get_performance_overall = function (req, res, next) {
                 .query('SELECT * from F_GET_PERF_PO(:a)', {
                     replacements: {
                         a: (req.user.id ? null : req.user.id),
-                        //a: '13aeef10-eb77-4d35-8dbb-4fc7ef84d25e' // t4
+                        // a: '13aeef10-eb77-4d35-8dbb-4fc7ef84d25e' // t4
                         // a: '5bf8419c-2b52-485c-b01e-ed82c89f069a' //t1
                         // a: '1b578a15-8c04-47f3-87de-cb7e4f06c281' //t3
                     }
@@ -65,8 +65,8 @@ exports.get_performance_overall = function (req, res, next) {
             return db.sequelize
                 .query('SELECT * from F_GET_PERF_PSR(:a)', {
                     replacements: {
-                         a: (req.user.id == null ? null : req.user.id),
-                        //a: '13aeef10-eb77-4d35-8dbb-4fc7ef84d25e' //t4
+                        a: (req.user.id == null ? null : req.user.id),
+                        // a: '13aeef10-eb77-4d35-8dbb-4fc7ef84d25e' //t4
                         // a: '5bf8419c-2b52-485c-b01e-ed82c89f069a' //t1
                         // a: '1b578a15-8c04-47f3-87de-cb7e4f06c281' //t3
                     }
@@ -112,7 +112,10 @@ exports.get_performance_overall = function (req, res, next) {
                 let po_decline = calculateDeclines(tmp_po);
                 let psr_decline = calculateDeclines(tmp_psr);
 
-                overall[i] = ({ total_po: tmp_po.length, total_po_decline: po_decline, tmp_average_po, total_psr: tmp_psr.length, total_psr_decline: psr_decline, tmp_average_psr });
+                let po_efficiency = ((tmp_po.length - po_decline)/tmp_po.length)*100;
+                let psr_efficiency = ((tmp_psr.length - psr_decline)/tmp_psr.length)*100;
+
+                overall[i] = ({ total_po: tmp_po.length, total_po_decline: po_decline, po_efficiency, tmp_average_po, total_psr: tmp_psr.length, total_psr_decline: psr_decline, psr_efficiency,tmp_average_psr });
 
                 let tmp_usr_po = user_po_result.filter(x =>
                     (new Date(x.time_created)).getMonth() == i
@@ -125,7 +128,11 @@ exports.get_performance_overall = function (req, res, next) {
                 let tmp_usr_average_psr = getAverageTime(calculateTotalTime(tmp_usr_psr), tmp_usr_psr.length)
                 let usr_po_decline = calculateDeclines(tmp_usr_po);
                 let usr_psr_decline = calculateDeclines(tmp_usr_psr);
-                user[i] = ({ total_po: tmp_usr_po.length, total_usr_po_decline: usr_po_decline, tmp_usr_average_po, total_psr: tmp_usr_psr.length, total_usr_psr_decline: usr_psr_decline, tmp_usr_average_psr });
+
+                let usr_po_efficiency = ((tmp_usr_po.length - usr_po_decline)/tmp_usr_po.length)*100;
+                let usr_psr_efficiency = ((tmp_usr_psr.length - usr_psr_decline)/tmp_usr_psr.length)*100;
+
+                user[i] = ({ total_po: tmp_usr_po.length, total_usr_po_decline: usr_po_decline, usr_po_efficiency,  tmp_usr_average_po, total_psr: tmp_usr_psr.length, total_usr_psr_decline: usr_psr_decline, usr_psr_efficiency, tmp_usr_average_psr });
             }
 
             res.status(200).send({ overall, user });
