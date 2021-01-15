@@ -46,7 +46,7 @@ exports.get_performance_overall = function (req, res, next) {
             return db.sequelize
                 .query('SELECT * from F_GET_PERF_PO(:a)', {
                     replacements: {
-                        a: (req.user.id ? null : req.user.id),
+                        a: (req.user.id == null ? null : req.user.id),
                         // a: '13aeef10-eb77-4d35-8dbb-4fc7ef84d25e' // t4
                         // a: '5bf8419c-2b52-485c-b01e-ed82c89f069a' //t1
                         // a: '1b578a15-8c04-47f3-87de-cb7e4f06c281' //t3
