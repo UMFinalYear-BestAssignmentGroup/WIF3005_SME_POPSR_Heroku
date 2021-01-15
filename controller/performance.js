@@ -82,8 +82,7 @@ exports.get_performance_overall = function (req, res, next) {
     Promise.all([getPerf_PO_overall(req, res), getPerf_PSR_overall(req, res), getPerf_PO_user(req, res), getPerf_PSR_user(req, res)])
         .then(result => {
             let year = req.body.year == null ? (new Date()).getFullYear() : req.body.year;
-
-            console.log(result)
+            console.log(req.body)
             let po = result[0];
             let psr = result[1];
             let usr_po = result[2];
@@ -93,8 +92,6 @@ exports.get_performance_overall = function (req, res, next) {
             let psr_result = psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
             let user_po_result = usr_po.filter(x => (new Date(x.time_created)).getFullYear() == year);
             let user_psr_result = usr_psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
-
-            console.log((new Date(po[0].time_created)).getFullYear())
 
             let overall = {};
             let user = {};
@@ -151,7 +148,6 @@ function calculateDeclines(data) {
     try {
         let tmp = 0;
         for (const i in data) {
-            console.log(data[i].status_decline)
             if (data[i].status_decline) tmp++;
         }
 
