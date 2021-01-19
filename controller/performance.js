@@ -82,7 +82,8 @@ exports.get_performance_overall = function (req, res, next) {
     Promise.all([getPerf_PO_overall(req, res), getPerf_PSR_overall(req, res), getPerf_PO_user(req, res), getPerf_PSR_user(req, res)])
         .then(result => {
             let year = req.body.year == null ? (new Date()).getFullYear() : req.body.year;
-            console.log(req.body)
+
+            console.log(result)
             let po = result[0];
             let psr = result[1];
             let usr_po = result[2];
@@ -92,6 +93,8 @@ exports.get_performance_overall = function (req, res, next) {
             let psr_result = psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
             let user_po_result = usr_po.filter(x => (new Date(x.time_created)).getFullYear() == year);
             let user_psr_result = usr_psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
+
+            console.log((new Date(po[0].time_created)).getFullYear())
 
             let overall = {};
             let user = {};
@@ -110,10 +113,10 @@ exports.get_performance_overall = function (req, res, next) {
                 let po_decline = calculateDeclines(tmp_po);
                 let psr_decline = calculateDeclines(tmp_psr);
 
-                let po_efficiency = ((tmp_po.length - po_decline)/tmp_po.length)*100;
-                let psr_efficiency = ((tmp_psr.length - psr_decline)/tmp_psr.length)*100;
+                let po_efficiency = ((tmp_po.length - po_decline) / tmp_po.length) * 100;
+                let psr_efficiency = ((tmp_psr.length - psr_decline) / tmp_psr.length) * 100;
 
-                overall[i] = ({ total_po: tmp_po.length, total_po_decline: po_decline, po_efficiency, tmp_average_po, total_psr: tmp_psr.length, total_psr_decline: psr_decline, psr_efficiency,tmp_average_psr });
+                overall[i] = ({ total_po: tmp_po.length, total_po_decline: po_decline, po_efficiency, tmp_average_po, total_psr: tmp_psr.length, total_psr_decline: psr_decline, psr_efficiency, tmp_average_psr });
 
                 let tmp_usr_po = user_po_result.filter(x =>
                     (new Date(x.time_created)).getMonth() == i
@@ -127,10 +130,10 @@ exports.get_performance_overall = function (req, res, next) {
                 let usr_po_decline = calculateDeclines(tmp_usr_po);
                 let usr_psr_decline = calculateDeclines(tmp_usr_psr);
 
-                let usr_po_efficiency = ((tmp_usr_po.length - usr_po_decline)/tmp_usr_po.length)*100;
-                let usr_psr_efficiency = ((tmp_usr_psr.length - usr_psr_decline)/tmp_usr_psr.length)*100;
+                let usr_po_efficiency = ((tmp_usr_po.length - usr_po_decline) / tmp_usr_po.length) * 100;
+                let usr_psr_efficiency = ((tmp_usr_psr.length - usr_psr_decline) / tmp_usr_psr.length) * 100;
 
-                user[i] = ({ total_po: tmp_usr_po.length, total_usr_po_decline: usr_po_decline, usr_po_efficiency,  tmp_usr_average_po, total_psr: tmp_usr_psr.length, total_usr_psr_decline: usr_psr_decline, usr_psr_efficiency, tmp_usr_average_psr });
+                user[i] = ({ total_po: tmp_usr_po.length, total_usr_po_decline: usr_po_decline, usr_po_efficiency, tmp_usr_average_po, total_psr: tmp_usr_psr.length, total_usr_psr_decline: usr_psr_decline, usr_psr_efficiency, tmp_usr_average_psr });
             }
 
             res.status(200).send({ overall, user });
@@ -144,10 +147,126 @@ exports.get_performance_overall = function (req, res, next) {
         })
 }
 
+exports.get_all_user_performance = async (req, res, next) => {
+    const getAllUsers = async () => {
+        return models.Users.findAll({
+            attributes: ['id', 'username', 'firstname', 'lastname', 't1', 't2', 't3', 't4', 'is_admin'],
+            include: [
+                {
+                    model: models.department,
+                    required: false,
+                    as: 'department',
+                    attributes: ['cd']
+                },
+                {
+                    model: models.branch,
+                    required: true,
+                    as: 'branch',
+                    attributes: ['cd']
+                }
+            ],
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        }).catch(err => {
+            winston.error({
+                level: 'error',
+                label: 'perf_get_all_user',
+                message: err
+            })
+            console.log(err);
+        })
+    }
+
+    const get_po_performance = async (user_id) => {
+        return db.sequelize
+            .query('SELECT * from F_GET_PERF_PO(:a)', {
+                replacements: {
+                    a: user_id
+                }
+            }).catch(err => {
+                console.log(err);
+            });
+    }
+
+    const get_psr_performance = async (user_id) => {
+        return db.sequelize
+            .query('SELECT * from F_GET_PERF_PSR(:a)', {
+                replacements: {
+                    a: user_id
+                }
+            }).catch(err => {
+                console.log(err);
+            });
+    }
+
+    let userTmp = await getAllUsers();
+    let user_data = [];
+    let year = req.body.year == null ? (new Date()).getFullYear : req.body.year;
+
+    for (let index = 0; index < userTmp.length; index++) {
+        console.log(userTmp[index].id)
+
+        let psr = await get_psr_performance(userTmp[index].id);
+        let po = await get_po_performance(userTmp[index].id);
+
+        let psr_result = psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
+        let po_result = po.filter(x => (new Date(x.time_created)).getFullYear() == year);
+
+        let usr_perf = [];
+
+        for (let i = 0; i < 12; i++) {
+            let tmp_psr = psr_result.filter(x => (new Date(x.time_created)).getMonth() == i);
+            let tmp_po = po_result.filter(x => (new Date(x.time_created)).getMonth() == i);
+
+            let tmp_average_po = getAverageTime(calculateTotalTime(tmp_po), tmp_po.length)
+            let tmp_average_psr = getAverageTime(calculateTotalTime(tmp_psr), tmp_psr.length)
+            let po_decline = calculateDeclines(tmp_po);
+            let psr_decline = calculateDeclines(tmp_psr);
+
+            let po_efficiency = ((tmp_po.length - po_decline) / tmp_po.length) * 100;
+            let psr_efficiency = ((tmp_psr.length - psr_decline) / tmp_psr.length) * 100;
+
+            usr_perf[i] = ({ 
+                total_po: tmp_po.length, 
+                total_po_decline: po_decline, 
+                po_efficiency, tmp_average_po, 
+                total_psr: tmp_psr.length, 
+                total_psr_decline: psr_decline, 
+                psr_efficiency, tmp_average_psr 
+            });
+        }
+
+        let tmp = {
+            id: userTmp[index].id,
+            username: userTmp[index].username,
+            firstname: userTmp[index].firstname,
+            lastname: userTmp[index].lastname,
+            t1: userTmp[index].t1,
+            t2: userTmp[index].t2,
+            t3: userTmp[index].t3,
+            t4: userTmp[index].t4,
+            is_admin: userTmp[index].is_admin,
+            performance: usr_perf
+        }
+        user_data.push(tmp);
+    }
+
+    try {
+        res.status(200).send(user_data);
+    } catch (err) {
+        res.status(400).send(err);
+    }
+
+
+
+}
+
 function calculateDeclines(data) {
     try {
         let tmp = 0;
         for (const i in data) {
+            console.log(data[i].status_decline)
             if (data[i].status_decline) tmp++;
         }
 
