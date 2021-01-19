@@ -150,7 +150,7 @@ exports.get_performance_overall = function (req, res, next) {
 exports.get_all_user_performance = async (req, res, next) => {
     const getAllUsers = async () => {
         return models.Users.findAll({
-            attributes: ['id', 'username', 'firstname', 'lastname', 't1', 't2', 't3', 't4', 'is_admin'],
+            attributes: ['id', 'username', 'firstname', 'lastname', 't1', 't2', 't3', 't4', 'is_admin', 'acct_t'],
             include: [
                 {
                     model: models.department,
@@ -249,6 +249,7 @@ exports.get_all_user_performance = async (req, res, next) => {
             t3: userTmp[index].t3,
             t4: userTmp[index].t4,
             is_admin: userTmp[index].is_admin,
+            acct_t: userTmp[index].acct_t,
             performance: usr_perf
         }
         user_data.push(tmp);
