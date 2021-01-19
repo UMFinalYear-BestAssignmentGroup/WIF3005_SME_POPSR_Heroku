@@ -167,7 +167,11 @@ exports.get_all_user_performance = async (req, res, next) => {
             ],
             order: [
                 ['createdAt', 'DESC']
-            ]
+            ],
+            where: {
+                acct_t: false,
+                is_admin: false
+            }
         }).catch(err => {
             winston.error({
                 level: 'error',
@@ -256,7 +260,7 @@ exports.get_all_user_performance = async (req, res, next) => {
     }
 
     try {
-        res.status(200).send(user_data);
+        res.status(200).send({users: userTmp, user_data: user_data});
     } catch (err) {
         res.status(400).send(err);
     }
