@@ -83,7 +83,6 @@ exports.get_performance_overall = function (req, res, next) {
         .then(result => {
             let year = req.body.year == null ? (new Date()).getFullYear() : req.body.year;
 
-            console.log(result)
             let po = result[0];
             let psr = result[1];
             let usr_po = result[2];
@@ -93,6 +92,7 @@ exports.get_performance_overall = function (req, res, next) {
             let psr_result = psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
             let user_po_result = usr_po.filter(x => (new Date(x.time_created)).getFullYear() == year);
             let user_psr_result = usr_psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
+            console.log(user_po_result)
 
             console.log((new Date(po[0].time_created)).getFullYear())
 
@@ -195,7 +195,8 @@ exports.get_all_user_performance = async (req, res, next) => {
                 replacements: {
                     a: user_id
                 }
-            }).catch(err => {
+            })
+            .catch(err => {
                 console.log(err);
             });
     }
@@ -210,14 +211,15 @@ exports.get_all_user_performance = async (req, res, next) => {
         let psr = await get_psr_performance(userTmp[index].id);
         let po = await get_po_performance(userTmp[index].id);
 
-        let psr_result = psr.filter(x => (new Date(x.time_created)).getFullYear() == year);
-        let po_result = po.filter(x => (new Date(x.time_created)).getFullYear() == year);
+        let psr_result = psr[0].filter(x => (new Date(x.time_created)).getFullYear() == year);
+        let po_result = po[0].filter(x => (new Date(x.time_created)).getFullYear() == year);
 
         let usr_perf = [];
 
         for (let i = 0; i < 12; i++) {
             let tmp_psr = psr_result.filter(x => (new Date(x.time_created)).getMonth() == i);
             let tmp_po = po_result.filter(x => (new Date(x.time_created)).getMonth() == i);
+            
 
             let tmp_average_po = getAverageTime(calculateTotalTime(tmp_po), tmp_po.length)
             let tmp_average_psr = getAverageTime(calculateTotalTime(tmp_psr), tmp_psr.length)
@@ -266,7 +268,7 @@ function calculateDeclines(data) {
     try {
         let tmp = 0;
         for (const i in data) {
-            console.log(data[i].status_decline)
+            // console.log(data[i].status_decline)
             if (data[i].status_decline) tmp++;
         }
 
